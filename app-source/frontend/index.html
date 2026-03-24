@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DevOps Task Manager</title>
+</head>
+<body style="font-family: Arial; padding: 50px; max-width: 600px; margin: auto;">
+    <h2>Submit a New Task</h2>
+    <input type="text" id="taskInput" placeholder="Enter a task name..." style="padding: 5px; width: 70%;">
+    <button onclick="submitTask()" style="padding: 5px 15px;">Submit</button>
+    <p id="status" style="color: green; font-weight: bold;"></p>
+
+    <hr style="margin: 30px 0;">
+
+    <h2>Task Database</h2>
+    <button onclick="fetchTasks()" style="margin-bottom: 10px;">Refresh List</button>
+    <table border="1" cellpadding="10" style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Task Name</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="taskList">
+            </tbody>
+    </table>
+
+    <script>
+        // Fetch tasks immediately when the page loads
+        window.onload = fetchTasks;
+
+        function submitTask() {
+            const task = document.getElementById('taskInput').value;
+            fetch('http://localhost:5000/api/task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task: task })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('status').innerText = data.status;
+                document.getElementById('taskInput').value = '';
+                fetchTasks(); // Refresh the list to show the new 'Queued' task
+            });
+        }
+
+        function fetchTasks() {
+            fetch('http://localhost:5000/api/tasks')
+            .then(response => response.json())
+            .then(tasks => {
+                const list = document.getElementById('taskList');
+                list.innerHTML = '';
+                tasks.forEach(task => {
+                    // Make 'Completed' green and 'Queued' orange
+                    const color = task.status === 'Completed' ? 'green' : 'orange';
+                    list.innerHTML += `
+                        <tr>
+                            <td>${task.id}</td>
+                            <td>${task.task_name}</td>
+                            <td style="color: ${color}; font-weight: bold;">${task.status}</td>
+                        </tr>
+                    `;
+                });
+            });
+        }
+    </script>
+</body>
+</html>
