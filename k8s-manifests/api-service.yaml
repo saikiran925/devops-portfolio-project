@@ -5,8 +5,8 @@ metadata:
 spec:
   selector:
     app: task-api # Matches the label in the Deployment
-  type: NodePort
+  type: ClusterIP
   ports:
     - protocol: TCP
       port: 5000
-      nodePort: 30007  
+      # nodePort: 30007  

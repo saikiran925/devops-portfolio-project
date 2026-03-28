@@ -40,3 +40,12 @@ jobs:
       - name: Push Worker image
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/task-worker:v1
+      # 7. Build Frontend image
+      - name: Build Frontend image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/task-frontend:v1 ./app-source/frontend
+
+      # 8. Push Frontend image
+      - name: Push Frontend image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/task-frontend:v1
