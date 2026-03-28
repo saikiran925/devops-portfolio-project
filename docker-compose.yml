@@ -1,0 +1,118 @@
+version: "3.9"
+
+services:
+
+  # -------------------- PostgreSQL Database Service --------------------
+  postgres:
+    image: postgres:13-alpine            # Lightweight official Postgres image
+    container_name: task-postgres
+
+    # Load DB credentials from .env file (good production practice)
+    env_file:
+      - .env
+
+    # Map host port -> container port (avoid local conflicts using env variable)
+    ports:
+      - "${POSTGRES_PORT}:5432"
+
+    # Volume for persistent database storage + init script bootstrap
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d   # Auto run SQL on first startup
+
+    # Healthcheck ensures DB is ready before dependent services start
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+    restart: always
+
+
+  # -------------------- Redis Queue Service --------------------
+  redis:
+    image: redis:alpine                  # Lightweight Redis image
+    container_name: task-redis
+
+    ports:
+      - "6379:6379"
+
+    # Healthcheck to confirm Redis is accepting connections
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+    restart: always
+
+
+  # -------------------- API Service --------------------
+  api:
+    build:
+      context: ./app-source/api-server/   # Build image from API source
+      dockerfile: Dockerfile
+
+    container_name: task-api
+
+    ports:
+      - "5000:5000"
+
+    # Load common environment variables
+    env_file:
+      - .env
+
+    # Service discovery using internal Docker DNS names
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_HOST: redis
+
+    # Wait until DB and Redis become healthy
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # API readiness probe (production pattern)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+    restart: always
+
+
+  # -------------------- Background Worker Service --------------------
+  worker:
+    build:
+      context: ./app-source/worker/       # Build worker image
+      dockerfile: Dockerfile
+
+    container_name: task-worker
+
+    env_file:
+      - .env
+
+    # Worker connects to internal service names
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_HOST: redis
+
+    # Worker starts only after Redis & DB ready
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+    restart: always
+
+
+# -------------------- Named Volume for Persistent Storage --------------------
+volumes:
+  postgres_data:

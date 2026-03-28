@@ -33,6 +33,10 @@ with get_db_connection() as conn:
         """)
     conn.commit()
 
+@app.route("/health")
+def health():
+    return {"status": "ok"}, 200
+
 @app.route('/api/tasks', methods=['GET'])
 def get_tasks():
     with get_db_connection() as conn:

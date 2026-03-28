@@ -3,33 +3,62 @@ import time
 import redis
 import psycopg2
 
-cache = redis.Redis(host=os.getenv('REDIS_HOST', 'localhost'), port=6379)
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5433")
+DB_NAME = os.getenv("DB_NAME", "taskdb")
+DB_USER = os.getenv("DB_USER", "myuser")
+DB_PASS = os.getenv("DB_PASS", "mypassword")
+
+
+def wait_for_redis():
+    while True:
+        try:
+            r = redis.Redis(host=REDIS_HOST, port=6379)
+            r.ping()
+            print("Connected to Redis")
+            return r
+        except Exception:
+            print("Waiting for Redis...")
+            time.sleep(2)
+
 
 def get_db_connection():
-    return psycopg2.connect(
-        host=os.getenv('DB_HOST', 'localhost'),
-        port=os.getenv('DB_PORT', '5433'), # <-- Added the port here too
-        database=os.getenv('DB_NAME', 'taskdb'),
-        user=os.getenv('DB_USER', 'myuser'),
-        password=os.getenv('DB_PASS', 'mypassword')
-    )
+    while True:
+        try:
+            conn = psycopg2.connect(
+                host=DB_HOST,
+                port=DB_PORT,
+                database=DB_NAME,
+                user=DB_USER,
+                password=DB_PASS
+            )
+            print("Connected to PostgreSQL")
+            return conn
+        except Exception:
+            print("Waiting for PostgreSQL...")
+            time.sleep(2)
+
+
+cache = wait_for_redis()
 
 print("Worker started. Listening for tasks...")
 
 while True:
-    # Pull from queue
-    _, message = cache.brpop('task_queue')
-    
-    # Message looks like "15|Learn Kubernetes"
-    task_id, task_name = message.decode('utf-8').split('|', 1)
-    
+    _, message = cache.brpop("task_queue")
+
+    task_id, task_name = message.decode("utf-8").split("|", 1)
+
     print(f"[{time.strftime('%X')}] Processing Task {task_id}: {task_name}")
-    time.sleep(3) # Simulate heavy work
-    
-    # Update Database to 'Completed'
-    with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute("UPDATE tasks SET status = %s WHERE id = %s", ('Completed', task_id))
+    time.sleep(3)
+
+    conn = get_db_connection()
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE tasks SET status = %s WHERE id = %s",
+            ("Completed", task_id),
+        )
         conn.commit()
-        
+    conn.close()
+
     print(f"[{time.strftime('%X')}] Successfully completed Task {task_id}")
