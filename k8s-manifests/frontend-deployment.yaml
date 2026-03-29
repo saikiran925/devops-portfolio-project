@@ -15,5 +15,6 @@ spec:
       containers:
       - name: frontend
         image: saikiran1412/task-frontend:v2 # Update with your DockerHub username and image tag
+        imagePullPolicy: Always
         ports:
         - containerPort: 80 

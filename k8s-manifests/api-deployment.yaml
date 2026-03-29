@@ -15,6 +15,7 @@ spec:
       containers:
       - name: task-api
         image: saikiran1412/task-api:v1
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
         env:

@@ -15,6 +15,7 @@ spec:
       containers:
       - name: worker
         image: saikiran1412/task-worker:v1
+        imagePullPolicy: Always
         env:
         - name: DB_HOST
           value: "postgres"
