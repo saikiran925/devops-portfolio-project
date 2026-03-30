@@ -90,3 +90,58 @@ These manifests are currently configured for local execution using Minikube and 
 To deploy this architecture to a managed cloud provider like Amazon EKS, simply update the `ingress.yaml` file to provision a cloud load balancer:
 1. Change `ingressClassName: nginx` to your cloud provider's controller (e.g., `alb`).
 2. Add the required Load Balancer annotations (e.g., `alb.ingress.kubernetes.io/scheme: internet-facing`).
+# Kubernetes Deployment Guide
+
+This directory contains Kubernetes manifests for the asynchronous task manager.
+
+---
+
+## 🚀 Deploy
+
+```bash
+kubectl apply -f .
+```
+
+---
+
+## 🔍 Check Status
+
+```bash
+kubectl get pods
+kubectl get svc
+```
+
+---
+
+## 🌐 Access API
+
+```bash
+kubectl port-forward service/api-service 8000:5000
+```
+
+Open:
+
+```
+http://localhost:8000
+```
+
+---
+
+## 🧪 Debugging
+
+```bash
+kubectl describe pod <pod-name>
+kubectl logs <pod-name>
+kubectl exec -it <pod-name> -- sh
+```
+
+---
+
+## ⚠️ Notes
+
+* Services act as DNS:
+
+  * postgres
+  * redis
+
+* API depends on Redis and PostgreSQL

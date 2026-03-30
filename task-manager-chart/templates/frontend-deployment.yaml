@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  replicas: {{.Values.replicaCount.frontend}}
+  selector:
+    matchLabels:
+      app: task-frontend
+  template:
+    metadata:
+      labels:
+        app: task-frontend
+    spec:
+      containers:
+      - name: frontend
+        # image: saikiran1412/task-frontend:v2 # Update with your DockerHub username and image tag
+        image: {{.Values.images.frontend}}:{{.Values.images.tag}}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80 
+        

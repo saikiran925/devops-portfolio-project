@@ -1,0 +1,14 @@
+images:
+  frontend: "saikiran1412/task-frontend"
+  api: "saikiran1412/task-api"
+  worker: "saikiran1412/task-worker"
+  tag: "latest"   # When you want to upgrade, you just change this ONE line!
+
+
+# Application Settings
+namespace: "default"
+replicaCount:
+  api: 2
+  frontend: 1
+  worker: 1
+

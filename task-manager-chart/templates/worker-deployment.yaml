@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-deployment
+spec:
+  replicas: {{.Values.replicaCount.worker}}
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+      - name: worker
+        # image: saikiran1412/task-worker:v1
+        image: {{.Values.images.worker}}:{{.Values.images.tag}}
+        imagePullPolicy: Always
+        env:
+        - name: DB_HOST
+          value: "postgres"
+        - name: DB_PORT
+          value: "5432"
+        - name: REDIS_HOST
+          value: "redis"
