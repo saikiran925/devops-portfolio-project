@@ -1,143 +1,3 @@
-# Asynchronous Task Manager – DevOps Portfolio Project
-
-This project demonstrates an event-driven microservices architecture where tasks are processed asynchronously using Redis, a background worker, and PostgreSQL.
-
-## Project Structure
-
-* `app-source/` – Application source code (API, Worker, Frontend)
-* `k8s-manifests/` – Kubernetes deployment files
-
-## Run Application Locally (Without Dockerizing Services)
-
-See:
-
-```
-app-source/RUN-LOCALLY.md
-```
-
-## /////////////////
-
-Markdown
-# Asynchronous Task Manager – DevOps Portfolio Project
-
-## 📌 Overview
-This project demonstrates a complete, cloud-native DevOps workflow by building, containerizing, and deploying an event-driven microservices architecture. 
-
-Users can submit tasks via a web UI. The API routes these tasks to a Redis message queue, where a background worker processes them asynchronously before saving the final state to a PostgreSQL database.
-
-## 🏗️ Architecture Flow
-`User` ➡️ `Ingress Controller` ➡️ `Frontend UI & Python API` ➡️ `Redis Queue` ➡️ `Worker` ➡️ `PostgreSQL`
-
-## 🚀 Tech Stack
-* **Backend:** Python (Flask)
-* **Frontend:** HTML / Vanilla JavaScript
-* **Message Broker:** Redis
-* **Database:** PostgreSQL
-* **Containerization:** Docker (Multi-stage builds)
-* **Orchestration:** Kubernetes (Minikube / Amazon EKS)
-* **Traffic Routing:** Nginx Ingress / AWS Application Load Balancer (ALB)
-* **CI/CD:** GitHub Actions
-
----
-
-## 🐳 Run Locally (Docker Compose)
-To test the raw containers without Kubernetes orchestration, you can spin up the entire stack using Docker Compose:
-
-docker compose up --build
-Navigate to http://localhost:80 in your browser.
-
-## ☸️ Kubernetes Deployment
-The core infrastructure is fully decoupled and secured. All backend services (Database, Redis, Worker, API) communicate strictly over internal ClusterIP networks, with a single Ingress Controller managing external traffic.
-
-1. Deploy the Cluster
-Apply all declarative manifests from the root directory:
-
-Bash
-kubectl apply -f k8s-manifests/
-2. Verify Services
-Ensure all pods and the Ingress resource are running:
-
-Bash
-kubectl get pods
-kubectl get ingress
-🌐 Accessing the Application
-This project is designed to be highly portable. The access method depends on whether you are running this in a local test environment or a production cloud environment.
-
-## Environment A: Local Testing (Minikube)
-When running on a local Minikube cluster, the project uses the Nginx Ingress Controller.
-
-Enable the local Nginx Ingress addon:
-
-Bash
-minikube addons enable ingress
-Open a network tunnel to expose the Ingress to your host machine:
-
-Bash
-minikube tunnel
-Open your browser and navigate to: http://127.0.0.1
-
-### Environment B: Production Cloud (AWS EKS)
-When migrating to Amazon EKS, the core deployment manifests remain exactly the same. Only the Ingress resource needs to be updated to provision a cloud-native Load Balancer.
-
-Ensure the AWS Load Balancer Controller is installed on your EKS cluster.
-
-Update the k8s-manifests/ingress.yaml file to use the AWS ALB:
-
-Change ingressClassName: nginx to ingressClassName: alb.
-
-Add the required internet-facing annotations:
-Add the required internet-facing annotations:
-
-YAML
-annotations:
-  alb.ingress.kubernetes.io/scheme: internet-facing
-  alb.ingress.kubernetes.io/target-type: ip
-  
-
-Apply the updated Ingress file. AWS will automatically provision a public Load Balancer URL to access the application.
-
-(Note: Never use the rewrite-target annotation for this specific path-based routing setup, as it will strip the /api prefix required by the backend).
-
-### 🔄 CI/CD Pipeline (GitHub Actions)
-This project includes an automated Continuous Integration pipeline triggered on every push to the main branch.
-
-Workflow Stages:
-
-Lints and tests the application code.
-
-Builds optimized multi-stage Docker images.
-
-Authenticates and pushes versioned images to Docker Hub.
-
-Required Repository Secrets:
-
-DOCKER_USERNAME
-
-DOCKER_PASSWORD
-
-📌 DevOps Highlights
-Advanced Traffic Management: Implemented path-based routing using Ingress Controllers.
-
-Network Security: Strict internal ClusterIP isolation for databases and message brokers.
-
-Container Optimization: Reduced image vulnerabilities and sizes using multi-stage Docker builds.
-
-Observability: Configured readiness probes, health checks, and utilized kubectl for system debugging.
-
-Environment Portability: Seamless transition from local Minikube to AWS EKS.
-
-📈 Future Improvements
-Implement Kubernetes ConfigMaps & Secrets for secure environment variable management.
-
-Provision Persistent Volumes (PV/PVC) to prevent PostgreSQL data loss during pod restarts.
-
-Introduce Horizontal Pod Autoscaling (HPA) to scale worker nodes based on Redis queue length.
-
-Utilize Terraform (IaC) to automate the provisioning of the AWS EKS cluster.
-
-Author: Saikiran
-
-
 # 🚀 Enterprise Cloud-Native Task Management Platform
 
 ![Architecture: Microservices](https://img.shields.io/badge/Architecture-Microservices-blue)
@@ -158,7 +18,7 @@ The application is fully decoupled, routed through an Nginx Ingress Controller, 
 graph TD
     Client([👤 User Browser]) -->|HTTP/80| Ingress[🌐 Nginx Ingress Controller]
     
-    subgraph Kubernetes Cluster [Kubernetes Cluster]
+    subgraph Cluster [Kubernetes Cluster]
         Ingress -->|Routes to /| Frontend[🖥️ Frontend Pods <br> Python/Flask]
         Frontend -->|Internal DNS: 5000| API[⚙️ API Pods <br> Python/Flask]
         
@@ -167,3 +27,77 @@ graph TD
         
         Worker -->|Saves State| DB[(🐘 PostgreSQL Database)]
     end
+```
+
+### 🛠️ Technology Stack
+* **Application:** Python (Flask), HTML/CSS
+* **Message Broker & Caching:** Redis
+* **Database:** PostgreSQL
+* **Containerization:** Docker & Docker Compose
+* **Orchestration:** Kubernetes (Minikube / local)
+* **Package Management:** Helm
+* **Continuous Integration (CI):** GitHub Actions
+* **Continuous Deployment (CD):** ArgoCD (GitOps)
+
+---
+
+## ⚙️ Continuous Integration & Delivery (CI/CD)
+
+This repository enforces strict CI/CD practices using a modern GitOps workflow.
+
+1. **Continuous Integration (GitHub Actions):** On every push to `main`, the CI pipeline automatically lints the code, builds the multi-stage Docker images for the Frontend, API, and Worker, and securely pushes the versioned images to Docker Hub.
+2. **Continuous Deployment (ArgoCD):** An ArgoCD controller running inside the Kubernetes cluster constantly monitors this GitHub repository. Upon detecting a change to the Helm `values.yaml` or manifests, it automatically synchronizes the cluster to match the declared state, ensuring zero-downtime rollouts.
+
+---
+
+## 🚀 Deployment Instructions
+
+### Option 1: Local Development (Docker Compose)
+For quick local testing without Kubernetes:
+```bash
+docker-compose up --build -d
+```
+*Navigate to `http://localhost:80`*
+
+### Option 2: Kubernetes via Helm (Manual)
+To deploy the dynamic Helm chart directly to a cluster:
+```bash
+# 1. Start cluster and enable Ingress
+minikube start
+minikube addons enable ingress
+
+# 2. Deploy the stack using Helm
+helm install task-manager ./task-manager-chart
+
+# 3. Open the network tunnel
+minikube tunnel
+```
+*Navigate to `http://127.0.0.1`*
+
+### Option 3: Enterprise GitOps (ArgoCD)
+To replicate the fully automated production environment:
+
+**1. Install ArgoCD:**
+```bash
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+
+**2. Access the GitOps Dashboard:**
+```bash
+# Retrieve the admin password
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+# Port-forward the dashboard
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+```
+
+**3. Deploy the Application:**
+Connect this repository in the ArgoCD UI (`https://localhost:8080`), point it to the `task-manager-chart` path, and enable **Auto-Sync**. ArgoCD will instantly provision the microservices, configure the hardware resource limits, and establish the Nginx routing.
+
+---
+
+## 📈 Scalability & High Availability
+The Helm chart is configured for production-readiness out of the box:
+* **Resource Quotas:** CPU and Memory requests/limits are explicitly defined to prevent noisy neighbor node crashes.
+* **Replica Management:** Scalability is natively handled via the `values.yaml` file, currently defaulting to multiple API and Frontend replicas for high availability.
