@@ -67,3 +67,10 @@ def create_task():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
+# ==========================================
+# INTENTIONAL SABOTAGE TO TEST CI PIPELINE
+# ==========================================
+def break_the_pipeline()
+    print(this_variable_does_not_exist)
+    return "This will never run"

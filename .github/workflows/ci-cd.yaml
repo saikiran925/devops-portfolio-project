@@ -1,42 +1,80 @@
-  name: CI/CD Pipeline
+name: Enterprise CI Pipeline
 
-  on:
-    push:
-      branches:
-        - main
+# Trigger the pipeline on pushes to main, or when a Pull Request is opened
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
-  jobs:
-    build-and-push:
-      name: Build and Push Docker Images
-      runs-on: ubuntu-latest
+jobs:
+  # ==========================================
+  # STAGE 1: Static Code Analysis
+  # ==========================================
+  static-code-analysis:
+    name: Static Code Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      steps:
-        - name: Checkout Code
-          uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
 
-        - name: Log in to Docker Hub
-          uses: docker/login-action@v3
-          with:
-            username: ${{ secrets.DOCKER_USERNAME }}
-            password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Install Flake8 Analyzer
+        run: pip install flake8
 
-        - name: Build and Push Frontend Image
-          uses: docker/build-push-action@v5
-          with:
-            context: ./app-source/frontend
-            push: true
-            tags: ${{ secrets.DOCKER_USERNAME }}/task-frontend:latest
+      # This checks for critical Python syntax errors, undefined names, and complexity
+      - name: Run Static Analysis
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-        - name: Build and Push API Image
-          uses: docker/build-push-action@v5
-          with:
-            context: ./app-source/api-server
-            push: true
-            tags: ${{ secrets.DOCKER_USERNAME }}/task-api:latest
+  # ==========================================
+  # STAGE 2: Build, Security Scan, and Push
+  # ==========================================
+  build-scan-push:
+    name: Build & Push Images
+    needs: static-code-analysis # <-- This successfully links Stage 2 back to the newly named Stage 1!
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-        - name: Build and Push Worker Image
-          uses: docker/build-push-action@v5
-          with:
-            context: ./app-source/worker
-            push: true
-            tags: ${{ secrets.DOCKER_USERNAME }}/task-worker:latest
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # --- BUILD IMAGES ---
+      - name: Build Frontend Image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/task-frontend:latest ./frontend
+
+      - name: Build API Image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/task-api:latest ./api
+
+      - name: Build Worker Image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/task-worker:latest ./worker
+
+      # --- SECURITY SCAN ---
+      - name: Run Trivy Vulnerability Scanner (Frontend)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ secrets.DOCKER_USERNAME }}/task-frontend:latest'
+          format: 'table'
+          exit-code: '0' 
+          severity: 'CRITICAL,HIGH'
+
+      # --- PUSH IMAGES ---
+      - name: Push Frontend Image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/task-frontend:latest
+
+      - name: Push API Image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/task-api:latest
+
+      - name: Push Worker Image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/task-worker:latest
