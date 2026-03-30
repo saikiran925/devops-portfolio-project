@@ -136,3 +136,34 @@ Introduce Horizontal Pod Autoscaling (HPA) to scale worker nodes based on Redis 
 Utilize Terraform (IaC) to automate the provisioning of the AWS EKS cluster.
 
 Author: Saikiran
+
+
+# 🚀 Enterprise Cloud-Native Task Management Platform
+
+![Architecture: Microservices](https://img.shields.io/badge/Architecture-Microservices-blue)
+![Orchestration: Kubernetes](https://img.shields.io/badge/Orchestration-Kubernetes-326CE5?logo=kubernetes&logoColor=white)
+![Package Manager: Helm](https://img.shields.io/badge/Package_Manager-Helm-0F1689?logo=helm&logoColor=white)
+![GitOps: ArgoCD](https://img.shields.io/badge/GitOps-ArgoCD-EF7B4D?logo=argo&logoColor=white)
+![CI/CD: GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?logo=github-actions&logoColor=white)
+
+A fully automated, event-driven microservices application designed to showcase a complete, production-grade DevOps lifecycle. This project demonstrates expertise in containerization, Kubernetes orchestration, dynamic Helm templating, and pull-based GitOps continuous deployment.
+
+---
+
+## 🏗️ System Architecture
+
+The application is fully decoupled, routed through an Nginx Ingress Controller, and utilizes an asynchronous message-passing architecture to process background tasks.
+
+```mermaid
+graph TD
+    Client([👤 User Browser]) -->|HTTP/80| Ingress[🌐 Nginx Ingress Controller]
+    
+    subgraph Kubernetes Cluster [Kubernetes Cluster]
+        Ingress -->|Routes to /| Frontend[🖥️ Frontend Pods <br> Python/Flask]
+        Frontend -->|Internal DNS: 5000| API[⚙️ API Pods <br> Python/Flask]
+        
+        API -->|Queues Task| Redis[(🟥 Redis Broker)]
+        Redis -->|Pulls Task| Worker[👷 Worker Pods <br> Python]
+        
+        Worker -->|Saves State| DB[(🐘 PostgreSQL Database)]
+    end
