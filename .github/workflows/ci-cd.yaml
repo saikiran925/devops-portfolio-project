@@ -52,13 +52,13 @@ jobs:
 
       # --- BUILD IMAGES ---
       - name: Build Frontend Image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/task-frontend:latest ./frontend
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/task-frontend:latest ./app-source/frontend
 
       - name: Build API Image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/task-api:latest ./api
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/task-api:latest ./app-source/api-server
 
       - name: Build Worker Image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/task-worker:latest ./worker
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/task-worker:latest ./app-source/worker
 
       # --- SECURITY SCAN ---
       - name: Run Trivy Vulnerability Scanner (Frontend)
