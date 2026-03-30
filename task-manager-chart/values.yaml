@@ -9,6 +9,6 @@ images:
 namespace: "default"
 replicaCount:
   api: 2
-  frontend: 3
+  frontend: 2
   worker: 1
 
